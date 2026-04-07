@@ -8,9 +8,9 @@ export const DEFAULT_TECHNICIANS = [
 export const DEFAULT_PRICE = 350;
 
 export const COMPANY = {
-  name: process.env.NEXT_PUBLIC_COMPANY_NAME || 'Rolling Suds',
-  phone: process.env.NEXT_PUBLIC_COMPANY_PHONE || '(555) 000-0000',
-  email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || 'change-me@example.com',
+  name: process.env.NEXT_PUBLIC_COMPANY_NAME || 'Rolling Suds of Westchester-Stamford',
+  phone: process.env.NEXT_PUBLIC_COMPANY_PHONE || '(914) 588-4140',
+  email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || 'max.gelfman@rollingsuds.com',
   brand: 'Rolling Suds',
   tagline: 'THE POWER WASHING PROFESSIONALS',
 };

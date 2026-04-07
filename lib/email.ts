@@ -1,10 +1,10 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const EMAIL_FROM = process.env.EMAIL_FROM || 'change-me@example.com';
-const EMAIL_SENDER_NAME = process.env.EMAIL_SENDER_NAME || 'Rolling Suds';
-const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || process.env.EMAIL_FROM || '';
-const EMAIL_CC = process.env.EMAIL_CC || process.env.EMAIL_REPLY_TO || '';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'max@rollingsudsnyct.net';
+const EMAIL_SENDER_NAME = process.env.EMAIL_SENDER_NAME || 'Max Gelfman';
+const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || 'max.gelfman@rollingsuds.com';
+const EMAIL_CC = process.env.EMAIL_CC || 'max.gelfman@rollingsuds.com';
 
 interface Attachment {
   name: string;
