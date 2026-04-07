@@ -3,23 +3,39 @@ import fs from 'fs';
 import path from 'path';
 import { Job } from './types';
 
-// Use Redis when any known Upstash/Vercel KV env vars are present
-const redisUrl = process.env.KV_REST_API_URL
-  || process.env.UPSTASH_REDIS_REST_URL
-  || process.env.KV_URL
-  || '';
-const redisToken = process.env.KV_REST_API_TOKEN
-  || process.env.UPSTASH_REDIS_REST_TOKEN
-  || process.env.KV_REST_API_READ_ONLY_TOKEN
-  || '';
-const useRedis = !!(redisUrl && redisToken);
+// Detect Redis credentials from any known env var format
+function getRedisCredentials(): { url: string; token: string } | null {
+  // Direct REST API vars (Vercel KV / Upstash)
+  const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+  const restToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+  if (restUrl && restToken) return { url: restUrl, token: restToken };
+
+  // Parse REDIS_URL connection string: redis://default:PASSWORD@HOST:PORT
+  const redisConnStr = process.env.REDIS_URL || '';
+  if (redisConnStr) {
+    try {
+      const parsed = new URL(redisConnStr);
+      const host = parsed.hostname; // e.g. "redis-xxxxx.upstash.io"
+      const password = parsed.password;
+      if (host && password) {
+        return { url: `https://${host}`, token: password };
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+const redisCreds = getRedisCredentials();
+const useRedis = !!redisCreds;
 
 let redis: Redis | null = null;
 function getRedis(): Redis {
   if (!redis) {
+    const creds = redisCreds!;
     redis = new Redis({
-      url: redisUrl,
-      token: redisToken,
+      url: creds.url,
+      token: creds.token,
     });
   }
   return redis;
