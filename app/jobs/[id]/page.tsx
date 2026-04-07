@@ -199,7 +199,7 @@ export default function JobDetailPage() {
 
   // ── Email sending ──
 
-  async function sendDocumentsEmail() {
+  async function sendDocumentsEmail(test = false) {
     if (!job) return;
     setSendingDocs(true);
     setEmailStatus('');
@@ -209,6 +209,7 @@ export default function JobDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'documents',
+          test,
           storeNumber: job.storeNumber,
           woNumber: job.woNumber || '',
           invoiceData: {
@@ -235,7 +236,7 @@ export default function JobDetailPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setEmailStatus('Documents sent to documents@gosuperclean.com');
+        setEmailStatus(test ? 'Test sent to max.gelfman@rollingsuds.com' : 'Documents sent to documents@gosuperclean.com');
       } else {
         setEmailStatus(`Failed: ${data.error}`);
       }
@@ -246,7 +247,7 @@ export default function JobDetailPage() {
     setSendingDocs(false);
   }
 
-  async function sendPhotosEmail() {
+  async function sendPhotosEmail(test = false) {
     if (!job || selectedPhotos.size === 0) return;
     setSendingPhotos(true);
     setEmailStatus('');
@@ -256,6 +257,7 @@ export default function JobDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'photos',
+          test,
           storeNumber: job.storeNumber,
           woNumber: job.woNumber || '',
           photoUrls: Array.from(selectedPhotos),
@@ -263,7 +265,7 @@ export default function JobDetailPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setEmailStatus('Photos sent to starbucks@gosuperclean.com');
+        setEmailStatus(test ? 'Test sent to max.gelfman@rollingsuds.com' : 'Photos sent to starbucks@gosuperclean.com');
       } else {
         setEmailStatus(`Failed: ${data.error}`);
       }
@@ -483,13 +485,22 @@ export default function JobDetailPage() {
                 <p className="text-gray-500 text-xs">To: documents@gosuperclean.com</p>
                 <p className="text-gray-500 text-xs">Attachments: Invoice PDF, Signed Work Order PDF</p>
               </div>
-              <button
-                onClick={sendDocumentsEmail}
-                disabled={sendingDocs || !emailConfigured || !job.woNumber}
-                className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
-              >
-                {sendingDocs ? 'Sending...' : 'Send Documents'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => sendDocumentsEmail(true)}
+                  disabled={sendingDocs || !emailConfigured || !job.woNumber}
+                  className="px-3 py-2 bg-[#374151] text-gray-300 rounded text-xs font-medium hover:bg-[#4b5563] transition-colors disabled:opacity-50"
+                >
+                  Test to Me
+                </button>
+                <button
+                  onClick={() => sendDocumentsEmail(false)}
+                  disabled={sendingDocs || !emailConfigured || !job.woNumber}
+                  className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
+                >
+                  {sendingDocs ? 'Sending...' : 'Send Documents'}
+                </button>
+              </div>
             </div>
             {!job.woNumber && (
               <p className="text-yellow-500 text-xs mt-2">WO # required before sending</p>
@@ -504,13 +515,22 @@ export default function JobDetailPage() {
                 <p className="text-gray-500 text-xs">To: starbucks@gosuperclean.com</p>
                 <p className="text-gray-500 text-xs">Attachments: {selectedPhotos.size} photo(s) from CompanyCam</p>
               </div>
-              <button
-                onClick={sendPhotosEmail}
-                disabled={sendingPhotos || !emailConfigured || selectedPhotos.size === 0}
-                className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
-              >
-                {sendingPhotos ? 'Sending...' : 'Send Photos'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => sendPhotosEmail(true)}
+                  disabled={sendingPhotos || !emailConfigured || selectedPhotos.size === 0}
+                  className="px-3 py-2 bg-[#374151] text-gray-300 rounded text-xs font-medium hover:bg-[#4b5563] transition-colors disabled:opacity-50"
+                >
+                  Test to Me
+                </button>
+                <button
+                  onClick={() => sendPhotosEmail(false)}
+                  disabled={sendingPhotos || !emailConfigured || selectedPhotos.size === 0}
+                  className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
+                >
+                  {sendingPhotos ? 'Sending...' : 'Send Photos'}
+                </button>
+              </div>
             </div>
             {selectedPhotos.size === 0 && (
               <p className="text-yellow-500 text-xs mt-2">Select photos from CompanyCam above first</p>

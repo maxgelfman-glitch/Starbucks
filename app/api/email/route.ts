@@ -6,6 +6,7 @@ import { generateWorkOrderPDF } from '@/lib/pdf/work-order';
 
 interface SendRequest {
   type: 'documents' | 'photos';
+  test?: boolean; // send to max.gelfman@rollingsuds.com instead of GoSuperClean
   storeNumber: string;
   woNumber: string;
   // For documents email
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body: SendRequest = await req.json();
+    const testRecipient = 'max.gelfman@rollingsuds.com';
 
     if (body.type === 'documents') {
       // Generate PDFs and send to documents@gosuperclean.com
@@ -65,8 +67,8 @@ export async function POST(req: NextRequest) {
       const woBase64 = Buffer.from(woPdf.output('arraybuffer')).toString('base64');
 
       await sendEmail({
-        to: 'documents@gosuperclean.com',
-        subject: `Starbucks #${body.storeNumber} WO# ${body.woNumber} Invoice`,
+        to: body.test ? testRecipient : 'documents@gosuperclean.com',
+        subject: `${body.test ? '[TEST] ' : ''}Starbucks #${body.storeNumber} WO# ${body.woNumber} Invoice`,
         body: `<p>Attached is the invoice and signed WO for Starbucks #${body.storeNumber} WO# ${body.woNumber}. Let me know if you have any questions. Thanks.</p>`,
         attachments: [
           {
@@ -102,8 +104,8 @@ export async function POST(req: NextRequest) {
       }
 
       await sendEmail({
-        to: 'starbucks@gosuperclean.com',
-        subject: `Starbucks #${body.storeNumber} WO# ${body.woNumber} Pictures`,
+        to: body.test ? testRecipient : 'starbucks@gosuperclean.com',
+        subject: `${body.test ? '[TEST] ' : ''}Starbucks #${body.storeNumber} WO# ${body.woNumber} Pictures`,
         body: `<p>Attached are the before/after pictures and front door photo for Starbucks #${body.storeNumber} WO# ${body.woNumber}. Let me know if you have any questions. Thanks.</p>`,
         attachments,
       });
