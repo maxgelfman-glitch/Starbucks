@@ -1,44 +1,23 @@
-import { Redis } from '@upstash/redis';
+import { createClient, RedisClientType } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import { Job } from './types';
 
-// Detect Redis credentials from any known env var format
-function getRedisCredentials(): { url: string; token: string } | null {
-  // Direct REST API vars (Vercel KV / Upstash)
-  const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
-  const restToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
-  if (restUrl && restToken) return { url: restUrl, token: restToken };
+const REDIS_URL = process.env.REDIS_URL || '';
+const useRedis = !!REDIS_URL;
 
-  // Parse REDIS_URL connection string: redis://default:PASSWORD@HOST:PORT
-  const redisConnStr = process.env.REDIS_URL || '';
-  if (redisConnStr) {
-    try {
-      const parsed = new URL(redisConnStr);
-      const host = parsed.hostname; // e.g. "redis-xxxxx.upstash.io"
-      const password = parsed.password;
-      if (host && password) {
-        return { url: `https://${host}`, token: password };
-      }
-    } catch {}
+let redisClient: RedisClientType | null = null;
+
+async function getRedis(): Promise<RedisClientType> {
+  if (!redisClient) {
+    redisClient = createClient({ url: REDIS_URL }) as RedisClientType;
+    redisClient.on('error', (err) => console.error('Redis error:', err));
+    await redisClient.connect();
   }
-
-  return null;
-}
-
-const redisCreds = getRedisCredentials();
-const useRedis = !!redisCreds;
-
-let redis: Redis | null = null;
-function getRedis(): Redis {
-  if (!redis) {
-    const creds = redisCreds!;
-    redis = new Redis({
-      url: creds.url,
-      token: creds.token,
-    });
+  if (!redisClient.isOpen) {
+    await redisClient.connect();
   }
-  return redis;
+  return redisClient;
 }
 
 const JOBS_KEY = 'starbucks:jobs';
@@ -55,8 +34,14 @@ function ensureDir() {
 
 export async function getAllJobs(): Promise<Job[]> {
   if (useRedis) {
-    const data = await getRedis().get<Job[]>(JOBS_KEY);
-    return data || [];
+    try {
+      const client = await getRedis();
+      const data = await client.get(JOBS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (err) {
+      console.error('Redis getAllJobs error:', err);
+      return [];
+    }
   }
   ensureDir();
   try {
@@ -69,7 +54,8 @@ export async function getAllJobs(): Promise<Job[]> {
 
 export async function setAllJobs(jobs: Job[]): Promise<void> {
   if (useRedis) {
-    await getRedis().set(JOBS_KEY, jobs);
+    const client = await getRedis();
+    await client.set(JOBS_KEY, JSON.stringify(jobs));
     return;
   }
   ensureDir();
@@ -109,8 +95,14 @@ const DEFAULT_TECHS = ['Max Gelfman', 'Alexander Cardone', 'Alejandro Claudio', 
 
 export async function getTechnicians(): Promise<string[]> {
   if (useRedis) {
-    const data = await getRedis().get<string[]>(TECHS_KEY);
-    return data || DEFAULT_TECHS;
+    try {
+      const client = await getRedis();
+      const data = await client.get(TECHS_KEY);
+      return data ? JSON.parse(data) : DEFAULT_TECHS;
+    } catch (err) {
+      console.error('Redis getTechnicians error:', err);
+      return DEFAULT_TECHS;
+    }
   }
   ensureDir();
   try {
@@ -123,7 +115,8 @@ export async function getTechnicians(): Promise<string[]> {
 
 export async function setTechnicians(techs: string[]): Promise<void> {
   if (useRedis) {
-    await getRedis().set(TECHS_KEY, techs);
+    const client = await getRedis();
+    await client.set(TECHS_KEY, JSON.stringify(techs));
     return;
   }
   ensureDir();
