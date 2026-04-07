@@ -3,15 +3,23 @@ import fs from 'fs';
 import path from 'path';
 import { Job } from './types';
 
-// Use Redis when KV env vars are present (Vercel), fall back to JSON file (local dev)
-const useRedis = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+// Use Redis when any known Upstash/Vercel KV env vars are present
+const redisUrl = process.env.KV_REST_API_URL
+  || process.env.UPSTASH_REDIS_REST_URL
+  || process.env.KV_URL
+  || '';
+const redisToken = process.env.KV_REST_API_TOKEN
+  || process.env.UPSTASH_REDIS_REST_TOKEN
+  || process.env.KV_REST_API_READ_ONLY_TOKEN
+  || '';
+const useRedis = !!(redisUrl && redisToken);
 
 let redis: Redis | null = null;
 function getRedis(): Redis {
   if (!redis) {
     redis = new Redis({
-      url: process.env.KV_REST_API_URL!,
-      token: process.env.KV_REST_API_TOKEN!,
+      url: redisUrl,
+      token: redisToken,
     });
   }
   return redis;

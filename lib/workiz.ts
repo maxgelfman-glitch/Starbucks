@@ -4,11 +4,22 @@ const API_SECRET = process.env.WORKIZ_API_SECRET || '';
 
 async function workizFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${BASE_URL}/${API_TOKEN}/${endpoint}`;
+
+  // For POST requests, include the api_secret in the request body
+  let body = options.body;
+  if (options.method === 'POST' && body) {
+    const parsed = JSON.parse(body as string);
+    parsed.api_secret = API_SECRET;
+    body = JSON.stringify(parsed);
+  } else if (options.method === 'POST') {
+    body = JSON.stringify({ api_secret: API_SECRET });
+  }
+
   const res = await fetch(url, {
     ...options,
+    body,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_SECRET}`,
       ...options.headers,
     },
   });
@@ -20,7 +31,16 @@ async function workizFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export async function testConnection() {
-  return workizFetch('job/all/');
+  // GET requests pass secret as query param
+  const url = `${BASE_URL}/${API_TOKEN}/job/all/?api_secret=${API_SECRET}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Workiz API error ${res.status}: ${text}`);
+  }
+  return res.json();
 }
 
 export async function createJob(data: {
@@ -40,11 +60,27 @@ export async function createJob(data: {
 }
 
 export async function getJob(jobId: string) {
-  return workizFetch(`job/get/${jobId}/`);
+  const url = `${BASE_URL}/${API_TOKEN}/job/get/${jobId}/?api_secret=${API_SECRET}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Workiz API error ${res.status}: ${text}`);
+  }
+  return res.json();
 }
 
 export async function getAllJobs(page = 1) {
-  return workizFetch(`job/all/?page=${page}`);
+  const url = `${BASE_URL}/${API_TOKEN}/job/all/?api_secret=${API_SECRET}&page=${page}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Workiz API error ${res.status}: ${text}`);
+  }
+  return res.json();
 }
 
 export async function updateJob(jobId: string, data: Record<string, unknown>) {
@@ -62,5 +98,13 @@ export async function assignTech(jobId: string, teamMemberId: string) {
 }
 
 export async function getTeamMembers() {
-  return workizFetch('tm/all/');
+  const url = `${BASE_URL}/${API_TOKEN}/tm/all/?api_secret=${API_SECRET}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Workiz API error ${res.status}: ${text}`);
+  }
+  return res.json();
 }
