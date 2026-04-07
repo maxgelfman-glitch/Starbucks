@@ -104,42 +104,54 @@ export default function JobDetailPage() {
 
   // ── CompanyCam ──
 
+  const [ccMatchedProject, setCcMatchedProject] = useState<string>('');
+
   async function searchCompanyCam() {
     if (!job) return;
     setCcSearching(true);
     setCcError('');
     setCcPhotos([]);
+    setCcProjects([]);
     setSelectedPhotos(new Set());
+    setCcMatchedProject('');
 
     try {
-      // Search by store number first, then by WO number if provided
-      const queries = [job.storeNumber];
-      if (job.woNumber) queries.push(job.woNumber);
+      // Smart search: uses exact naming convention "Starbucks #00806 WO# 1963606"
+      const params = new URLSearchParams({ storeNumber: job.storeNumber });
+      if (job.woNumber) params.set('woNumber', job.woNumber);
 
-      const allProjects: CCProject[] = [];
-      for (const q of queries) {
-        const res = await fetch(`/api/companycam?query=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        if (data.success && data.projects) {
-          for (const p of data.projects) {
-            if (!allProjects.find((x) => x.id === p.id)) {
-              allProjects.push(p);
-            }
-          }
+      const res = await fetch(`/api/companycam?${params}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        setCcError(data.error || 'Search failed.');
+        setCcSearching(false);
+        return;
+      }
+
+      if (data.matched && data.project) {
+        // Exact match found — photos already loaded
+        setCcMatchedProject(data.project.name);
+        setCcPhotos(data.photos || []);
+        // Auto-select all photos (typically exactly 5)
+        const allUrls = (data.photos || []).map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
+        setSelectedPhotos(new Set(allUrls));
+      } else {
+        // No exact match — show search results for manual selection
+        setCcProjects(data.searchResults || []);
+        if ((data.searchResults || []).length === 0) {
+          setCcError(`No CompanyCam projects found for Starbucks #${job.storeNumber}.`);
+        } else {
+          setCcError(data.message || 'No exact match. Select a project below.');
         }
       }
-
-      setCcProjects(allProjects);
-      if (allProjects.length === 0) {
-        setCcError('No CompanyCam projects found. Try searching manually.');
-      }
     } catch {
-      setCcError('Failed to search CompanyCam.');
+      setCcError('Failed to connect to CompanyCam.');
     }
     setCcSearching(false);
   }
 
-  async function loadPhotos(projectId: string) {
+  async function loadPhotos(projectId: string, projectName?: string) {
     setCcLoadingPhotos(true);
     setCcError('');
     try {
@@ -147,9 +159,11 @@ export default function JobDetailPage() {
       const data = await res.json();
       if (data.success && data.photos) {
         setCcPhotos(data.photos);
-        // Auto-select first 5 photos
-        const first5 = data.photos.slice(0, 5).map((p: CCPhoto) => getPhotoUrl(p));
-        setSelectedPhotos(new Set(first5.filter(Boolean)));
+        setCcProjects([]);
+        setCcMatchedProject(projectName || '');
+        // Auto-select all photos
+        const allUrls = data.photos.map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
+        setSelectedPhotos(new Set(allUrls));
       }
     } catch {
       setCcError('Failed to load photos.');
@@ -350,26 +364,37 @@ export default function JobDetailPage() {
       {/* CompanyCam Photos */}
       <div className="bg-[#111827] rounded-lg border border-[#1f2937] p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">CompanyCam Photos</h2>
+          <div>
+            <h2 className="text-lg font-semibold text-white">CompanyCam Photos</h2>
+            {ccMatchedProject && (
+              <p className="text-green-400 text-xs mt-1">Matched: {ccMatchedProject}</p>
+            )}
+          </div>
           <button
             onClick={searchCompanyCam}
             disabled={ccSearching}
             className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
           >
-            {ccSearching ? 'Searching...' : 'Find Project'}
+            {ccSearching ? 'Searching...' : ccPhotos.length > 0 ? 'Refresh' : 'Find Photos'}
           </button>
         </div>
 
-        {ccError && <p className="text-red-400 text-sm mb-3">{ccError}</p>}
+        {!ccSearching && ccPhotos.length === 0 && ccProjects.length === 0 && !ccError && (
+          <p className="text-gray-500 text-sm mb-3">
+            Click &quot;Find Photos&quot; to search for project &quot;Starbucks #{job.storeNumber}{job.woNumber ? ` WO# ${job.woNumber}` : ''}&quot;
+          </p>
+        )}
 
-        {/* Project results */}
+        {ccError && <p className="text-yellow-400 text-sm mb-3">{ccError}</p>}
+
+        {/* Fallback: manual project selection when no exact match */}
         {ccProjects.length > 0 && ccPhotos.length === 0 && (
           <div className="space-y-2 mb-4">
-            <p className="text-gray-400 text-sm">Found {ccProjects.length} project(s):</p>
+            <p className="text-gray-400 text-sm">Select the correct project:</p>
             {ccProjects.map((p) => (
               <button
                 key={p.id}
-                onClick={() => loadPhotos(p.id)}
+                onClick={() => loadPhotos(p.id, p.name)}
                 disabled={ccLoadingPhotos}
                 className="block w-full text-left p-3 bg-[#0a0f1a] border border-[#374151] rounded hover:border-[#00A4C7] transition-colors"
               >
@@ -387,8 +412,10 @@ export default function JobDetailPage() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-gray-400 text-sm">
-                {ccPhotos.length} photos found. {selectedPhotos.size} selected.
-                <span className="text-gray-500"> (Click to select/deselect. Need 5: front door + 2 before + 2 after)</span>
+                {ccPhotos.length} photo(s) — {selectedPhotos.size} selected
+                {selectedPhotos.size === ccPhotos.length && ccPhotos.length > 0 && (
+                  <span className="text-green-400 ml-1">(all selected)</span>
+                )}
               </p>
               <button
                 onClick={() => {

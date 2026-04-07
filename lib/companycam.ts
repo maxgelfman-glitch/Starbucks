@@ -41,11 +41,56 @@ export interface CCPhoto {
 }
 
 /**
- * Search CompanyCam projects by name (store # or WO #)
+ * Search CompanyCam projects by query string
  */
 export async function searchProjects(query: string): Promise<CCProject[]> {
   const encoded = encodeURIComponent(query);
-  return ccFetch(`/projects?query=${encoded}&per_page=10`);
+  return ccFetch(`/projects?query=${encoded}&per_page=25`);
+}
+
+/**
+ * Find the exact CompanyCam project for a Starbucks store.
+ * Projects are named like: "Starbucks #00806 WO# 1963606"
+ *
+ * Strategy:
+ * 1. Search with full name "Starbucks #XXXXX WO# YYYYYYY" (exact match)
+ * 2. If no match, search "Starbucks #XXXXX" (store only)
+ * 3. Filter results to verify the store number is actually in the project name
+ */
+export async function findStarbucksProject(
+  storeNumber: string,
+  woNumber?: string
+): Promise<CCProject | null> {
+  // Try exact search first: "Starbucks #00806 WO# 1963606"
+  if (woNumber) {
+    const exactQuery = `Starbucks #${storeNumber} WO# ${woNumber}`;
+    const exactResults = await searchProjects(exactQuery);
+    const exactMatch = exactResults.find((p) =>
+      p.name.includes(`#${storeNumber}`) && p.name.includes(woNumber)
+    );
+    if (exactMatch) return exactMatch;
+  }
+
+  // Fallback: search by store number only
+  const storeQuery = `Starbucks #${storeNumber}`;
+  const storeResults = await searchProjects(storeQuery);
+
+  // Filter to projects that actually contain this store number in the name
+  const matches = storeResults.filter((p) =>
+    p.name.includes(`#${storeNumber}`)
+  );
+
+  if (matches.length === 0) return null;
+
+  // If WO number provided, prefer a match that contains it
+  if (woNumber) {
+    const woMatch = matches.find((p) => p.name.includes(woNumber));
+    if (woMatch) return woMatch;
+  }
+
+  // Return most recently updated match
+  matches.sort((a, b) => b.updated_at - a.updated_at);
+  return matches[0];
 }
 
 /**
