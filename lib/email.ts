@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const EMAIL_FROM = process.env.EMAIL_FROM || 'max@rollingsudsws.com';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'max@rollingsudsnyct.net';
 
 interface Attachment {
   name: string;
