@@ -201,24 +201,31 @@ function EditField({
   type?: string;
   onSave: (v: string) => void;
 }) {
-  const [val, setVal] = useState(value);
-  const [dirty, setDirty] = useState(false);
+  const [localVal, setLocalVal] = useState(value);
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => { setVal(value); setDirty(false); }, [value]);
+  // When not actively editing, keep in sync with parent
+  const displayVal = editing ? localVal : value;
+
+  function handleBlur() {
+    setEditing(false);
+    if (localVal !== value) {
+      onSave(localVal);
+    }
+  }
 
   return (
     <div>
       <label className="block text-sm text-gray-400 mb-1">{label}</label>
-      <div className="flex gap-2">
-        <input
-          type={type}
-          value={val}
-          onChange={(e) => { setVal(e.target.value); setDirty(true); }}
-          onBlur={() => { if (dirty) { onSave(val); setDirty(false); } }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && dirty) { onSave(val); setDirty(false); } }}
-          className="flex-1 bg-[#0a0f1a] border border-[#374151] rounded px-3 py-2 text-sm text-gray-100 focus:border-[#00A4C7] focus:outline-none"
-        />
-      </div>
+      <input
+        type={type}
+        value={displayVal}
+        onFocus={() => { setEditing(true); setLocalVal(value); }}
+        onChange={(e) => { setLocalVal(e.target.value); }}
+        onBlur={handleBlur}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleBlur(); }}
+        className="w-full bg-[#0a0f1a] border border-[#374151] rounded px-3 py-2 text-sm text-gray-100 focus:border-[#00A4C7] focus:outline-none"
+      />
     </div>
   );
 }

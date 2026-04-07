@@ -1,7 +1,5 @@
 import { Job } from './types';
 
-let jobsCache: Job[] | null = null;
-
 function getBaseUrl(): string {
   if (typeof window !== 'undefined') {
     return '';
