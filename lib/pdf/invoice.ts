@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { COMPANY, SERVICE_DESCRIPTION, SERVICE_TITLE } from '../constants';
+import { COMPANY, SERVICE_TITLE } from '../constants';
 
 interface InvoiceData {
   storeNumber: string;
@@ -13,85 +13,87 @@ interface InvoiceData {
   zip: string;
 }
 
+const SHORT_DESCRIPTION =
+  'Pressure wash sidewalks, patio, drive thru. Sweep debris. Apply degreaser. ' +
+  'Concrete surfacer wash. After hours service. Before/after pics required. Clean ' +
+  'overspray from windows.';
+
 export function generateInvoicePDF(data: InvoiceData): jsPDF {
   const doc = new jsPDF('p', 'pt', 'letter');
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 40;
+  const margin = 50;
   const teal = '#00A4C7';
-  const gray = '#666666';
+  const gray = '#888888';
   const darkGray = '#333333';
-  let y = 40;
+  let y = 50;
 
   // Header - Rolling Suds brand
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(22);
   doc.setTextColor(teal);
   doc.text('Rolling Suds', margin, y);
-  y += 14;
+  y += 15;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(gray);
+  doc.setTextColor('#aaaaaa');
   doc.text('THE POWER WASHING PROFESSIONALS', margin, y);
-  y += 14;
+  y += 18;
 
   doc.setFontSize(9);
   doc.setTextColor(darkGray);
   doc.text(COMPANY.name, margin, y);
-  y += 12;
+  y += 13;
   doc.text(COMPANY.phone, margin, y);
-  y += 12;
+  y += 13;
   doc.text(COMPANY.email, margin, y);
 
   // INVOICE title right-aligned
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
+  doc.setFontSize(24);
   doc.setTextColor(darkGray);
-  doc.text('INVOICE', pageWidth - margin, 40, { align: 'right' });
+  doc.text('INVOICE', pageWidth - margin, 50, { align: 'right' });
 
   // Meta fields right-aligned
   const metaX = pageWidth - margin;
-  let metaY = 65;
-  doc.setFont('helvetica', 'normal');
+  let metaY = 78;
   doc.setFontSize(9);
-  doc.setTextColor(gray);
 
-  const formattedDate = formatDate(data.serviceDate);
+  const formattedDate = formatDateLong(data.serviceDate);
 
   const metaFields = [
-    ['Invoice #', data.invoiceNumber],
+    ['Invoice #', data.invoiceNumber || ''],
     ['Date', formattedDate],
     ['Job Type', 'Commercial'],
-    ['Due On', formattedDate],
   ];
 
   for (const [label, value] of metaFields) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${label}:`, metaX - 100, metaY, { align: 'right' });
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(gray);
+    doc.text(label, metaX - 120, metaY, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(darkGray);
     doc.text(value, metaX, metaY, { align: 'right' });
-    metaY += 14;
+    metaY += 15;
   }
 
-  y = 130;
+  y = 140;
 
-  // Divider
+  // Teal divider
   doc.setDrawColor(teal);
-  doc.setLineWidth(1.5);
+  doc.setLineWidth(2);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 20;
+  y += 25;
 
   // Bill To / Service Location
   const colWidth = (pageWidth - margin * 2) / 2;
-  const billToLabel = 'Bill To';
-  const serviceLoc = 'Service Location';
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(teal);
-  doc.text(billToLabel, margin, y);
-  doc.text(serviceLoc, margin + colWidth, y);
-  y += 16;
+  doc.setFontSize(11);
+  doc.setTextColor(darkGray);
+  doc.text('Bill To:', margin, y);
+  doc.text('Service Location:', margin + colWidth, y);
+  y += 18;
 
   const locationLines = [
     `Starbucks #${data.storeNumber} - WO ${data.woNumber}`,
@@ -102,126 +104,113 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(darkGray);
+  doc.setTextColor('#555555');
 
   for (const line of locationLines) {
     doc.text(line, margin, y);
     doc.text(line, margin + colWidth, y);
-    y += 13;
+    y += 14;
   }
 
-  y += 15;
+  y += 20;
 
-  // Description Table Header
+  // Description Table
   const tableLeft = margin;
   const tableRight = pageWidth - margin;
   const tableWidth = tableRight - tableLeft;
 
+  // Header row
   doc.setFillColor(teal);
-  doc.rect(tableLeft, y, tableWidth, 22, 'F');
+  doc.roundedRect(tableLeft, y, tableWidth, 24, 3, 3, 'F');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor('#FFFFFF');
 
-  const colDesc = tableLeft + 8;
-  const colQty = tableLeft + tableWidth * 0.6;
-  const colPrice = tableLeft + tableWidth * 0.73;
-  const colAmount = tableLeft + tableWidth * 0.87;
+  const colDesc = tableLeft + 12;
+  const colQty = tableLeft + tableWidth * 0.62;
+  const colPrice = tableLeft + tableWidth * 0.74;
+  const colAmount = tableLeft + tableWidth * 0.88;
 
-  doc.text('Description', colDesc, y + 15);
-  doc.text('QTY', colQty, y + 15);
-  doc.text('Price', colPrice, y + 15);
-  doc.text('Amount', colAmount, y + 15);
-  y += 22;
+  doc.text('Description', colDesc, y + 16);
+  doc.text('QTY', colQty, y + 16);
+  doc.text('Price', colPrice, y + 16);
+  doc.text('Amount', colAmount, y + 16);
+  y += 24;
 
-  // Description body
-  doc.setFillColor('#f5f5f5');
-  const descLines = SERVICE_DESCRIPTION.split('\n');
-  const bodyHeight = 18 + descLines.length * 11 + 10;
+  // Body row with light gray background
+  doc.setFillColor('#f7f7f7');
+  const bodyHeight = 70;
   doc.rect(tableLeft, y, tableWidth, bodyHeight, 'F');
+
+  // Border around table body
+  doc.setDrawColor('#e0e0e0');
+  doc.setLineWidth(0.5);
+  doc.rect(tableLeft, y, tableWidth, bodyHeight, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(darkGray);
-  doc.text(SERVICE_TITLE, colDesc, y + 14);
+  doc.text(SERVICE_TITLE, colDesc, y + 18);
 
+  // Condensed description
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  let descY = y + 28;
-  for (const line of descLines) {
-    doc.text(line.trim(), colDesc, descY);
-    descY += 11;
-  }
+  doc.setFontSize(8);
+  doc.setTextColor('#666666');
+  const descLines = doc.splitTextToSize(SHORT_DESCRIPTION, tableWidth * 0.55);
+  doc.text(descLines, colDesc, y + 34);
 
   // QTY, Price, Amount
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text('1', colQty, y + 14);
-  doc.text(`$${data.price.toFixed(2)}`, colPrice, y + 14);
-  doc.text(`$${data.price.toFixed(2)}`, colAmount, y + 14);
+  doc.setTextColor(darkGray);
+  doc.text('1', colQty + 5, y + 18);
+  doc.text(`$${data.price.toFixed(2)}`, colPrice, y + 18);
+  doc.text(`$${data.price.toFixed(2)}`, colAmount, y + 18);
 
-  y += bodyHeight + 5;
+  y += bodyHeight + 20;
 
-  // Totals
-  const totalsX = colPrice;
-  const totalsValX = colAmount;
+  // Totals - right aligned
+  const totalsLabelX = colPrice - 5;
+  const totalsValX = pageWidth - margin;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(gray);
-  doc.text('Sub total', totalsX, y + 14);
-  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y + 14);
+  doc.text('Sub total', totalsLabelX, y, { align: 'right' });
+  doc.setTextColor(darkGray);
+  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y, { align: 'right' });
   y += 18;
 
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
   doc.setTextColor(darkGray);
-  doc.text('Total', totalsX, y + 14);
-  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y + 14);
-  y += 18;
+  doc.text('Total', totalsLabelX, y, { align: 'right' });
+  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y, { align: 'right' });
+  y += 20;
 
   doc.setTextColor(teal);
   doc.setFontSize(10);
-  doc.text('Balance Due', totalsX, y + 14);
-  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y + 14);
-  y += 30;
-
-  // Payment history
-  doc.setDrawColor('#dddddd');
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 15;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(darkGray);
-  doc.text('Payment History', margin, y);
-  y += 14;
-
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(gray);
-  doc.text(`${formattedDate}    Check    $${data.price.toFixed(2)}`, margin, y);
-  y += 30;
-
-  // Terms
-  doc.setFontSize(7);
-  doc.setTextColor('#999999');
-  doc.text('Payment is due upon receipt. Late payments may be subject to additional fees.', margin, y);
-  y += 10;
-  doc.text('Thank you for your business!', margin, y);
+  doc.text('Balance Due', totalsLabelX, y, { align: 'right' });
+  doc.text(`$${data.price.toFixed(2)}`, totalsValX, y, { align: 'right' });
 
   // Bottom teal bar
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFillColor(teal);
-  doc.rect(0, pageHeight - 8, pageWidth, 8, 'F');
+  doc.rect(0, pageHeight - 6, pageWidth, 6, 'F');
 
   return doc;
 }
 
-function formatDate(dateStr: string): string {
+function formatDateLong(dateStr: string): string {
   try {
     const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    });
   } catch {
     return dateStr;
   }

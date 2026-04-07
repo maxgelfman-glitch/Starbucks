@@ -271,20 +271,12 @@ export default function GeneratePage() {
           </div>
         ) : (
           /* PDF Preview */
-          <div className="p-4">
-            {previewUrl ? (
-              <iframe
-                ref={iframeRef}
-                src={previewUrl}
-                className="w-full h-[75vh] rounded border border-[#1f2937]"
-                title={tab === 'invoice' ? 'Invoice Preview' : 'Work Order Preview'}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-[75vh] text-gray-500">
-                Loading preview...
-              </div>
-            )}
-            <div className="flex gap-3 mt-4">
+          <div className="p-6">
+            {/* Title bar with download button */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                {tab === 'invoice' ? 'Invoice' : 'Work Order'} - SB #{form.storeNumber || '?????'}
+              </h2>
               <button
                 onClick={() => {
                   if (previewUrl) {
@@ -296,17 +288,24 @@ export default function GeneratePage() {
                     a.click();
                   }
                 }}
-                className="px-5 py-2.5 bg-[#00A4C7] text-white rounded-lg text-sm font-medium hover:bg-[#0090b0] transition-colors"
+                className="px-5 py-2.5 bg-[#00A4C7] text-white rounded-lg text-sm font-semibold hover:bg-[#0090b0] transition-colors flex items-center gap-2"
               >
-                Download {tab === 'invoice' ? 'Invoice' : 'Work Order'} PDF
-              </button>
-              <button
-                onClick={() => setTab('input')}
-                className="px-5 py-2.5 bg-[#1f2937] text-gray-300 rounded-lg text-sm font-medium border border-[#374151] hover:border-[#00A4C7] transition-colors"
-              >
-                Back to Input
+                <span>&darr;</span> Download PDF
               </button>
             </div>
+
+            {previewUrl ? (
+              <iframe
+                ref={iframeRef}
+                src={previewUrl}
+                className="w-full h-[75vh] rounded-lg border border-[#1f2937] bg-white"
+                title={tab === 'invoice' ? 'Invoice Preview' : 'Work Order Preview'}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[75vh] text-gray-500">
+                Loading preview...
+              </div>
+            )}
           </div>
         )}
       </div>
