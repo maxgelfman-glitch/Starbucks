@@ -72,20 +72,25 @@ export default function UploadPage() {
     });
 
     if (res.ok) {
-      setMessage(`Saved ${jobs.length} jobs locally!`);
+      setMessage(`Saved ${jobs.length} jobs! Redirecting to schedule...`);
+      setTimeout(() => { window.location.href = '/schedule'; }, 1500);
     } else {
-      setMessage('Failed to save jobs.');
+      const data = await res.json().catch(() => ({}));
+      setMessage(`Failed to save: ${data.error || 'Unknown error'}`);
     }
   }
 
   async function pushToWorkiz() {
     setPushing(true);
     setPushProgress({ current: 0, total: rows.length });
+    let succeeded = 0;
+    let failed = 0;
+    const errors: string[] = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       try {
-        await fetch('/api/workiz/jobs', {
+        const res = await fetch('/api/workiz/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -98,14 +103,26 @@ export default function UploadPage() {
             jobType: 'Commercial',
           }),
         });
+        const data = await res.json();
+        if (res.ok && !data.error) {
+          succeeded++;
+        } else {
+          failed++;
+          errors.push(`#${row.storeNumber}: ${data.error || `HTTP ${res.status}`}`);
+        }
       } catch (err) {
-        console.error(`Failed to push job ${i + 1}:`, err);
+        failed++;
+        errors.push(`#${row.storeNumber}: ${err instanceof Error ? err.message : 'Network error'}`);
       }
       setPushProgress({ current: i + 1, total: rows.length });
     }
 
     setPushing(false);
-    setMessage(`Pushed ${rows.length} jobs to Workiz!`);
+    if (failed === 0) {
+      setMessage(`Successfully pushed ${succeeded} jobs to Workiz!`);
+    } else {
+      setMessage(`Workiz: ${succeeded} succeeded, ${failed} failed. Errors: ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? ` ...and ${errors.length - 3} more` : ''}`);
+    }
   }
 
   return (
