@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   try {
     if (!isEmailConfigured()) {
       return NextResponse.json(
-        { success: false, error: 'Azure AD credentials not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET in .env.local' },
+        { success: false, error: 'Email not configured. Set RESEND_API_KEY in .env.local' },
         { status: 500 }
       );
     }

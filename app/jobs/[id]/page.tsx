@@ -468,7 +468,7 @@ export default function JobDetailPage() {
 
         {!emailConfigured && (
           <p className="text-yellow-400 text-sm mb-4">
-            Outlook not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET in .env.local
+            Email not configured. Set RESEND_API_KEY in .env.local
           </p>
         )}
 

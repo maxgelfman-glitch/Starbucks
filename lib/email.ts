@@ -1,7 +1,7 @@
-const TENANT_ID = process.env.AZURE_TENANT_ID || '';
-const CLIENT_ID = process.env.AZURE_CLIENT_ID || '';
-const CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET || '';
-const SENDER_EMAIL = process.env.OUTLOOK_SENDER_EMAIL || 'max.gelfman@rollingsuds.com';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'max@rollingsudsws.com';
 
 interface Attachment {
   name: string;
@@ -17,88 +17,30 @@ interface EmailOptions {
 }
 
 /**
- * Get an OAuth2 access token via client credentials flow
- */
-async function getAccessToken(): Promise<string> {
-  if (!TENANT_ID || !CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error(
-      'Azure AD credentials not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET in .env.local'
-    );
-  }
-
-  const tokenUrl = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`;
-
-  const params = new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    scope: 'https://graph.microsoft.com/.default',
-  });
-
-  const res = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Azure auth failed (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  return data.access_token;
-}
-
-/**
- * Send an email via Microsoft Graph API
+ * Send an email via Resend
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const accessToken = await getAccessToken();
+  const { error } = await resend.emails.send({
+    from: `Max Gelfman <${EMAIL_FROM}>`,
+    replyTo: 'max.gelfman@rollingsuds.com',
+    to: [options.to],
+    cc: ['max.gelfman@rollingsuds.com'],
+    subject: options.subject,
+    html: options.body,
+    attachments: options.attachments.map((att) => ({
+      filename: att.name,
+      content: Buffer.from(att.base64, 'base64'),
+    })),
+  });
 
-  const message = {
-    message: {
-      subject: options.subject,
-      body: {
-        contentType: 'HTML',
-        content: options.body,
-      },
-      toRecipients: [
-        {
-          emailAddress: { address: options.to },
-        },
-      ],
-      attachments: options.attachments.map((att) => ({
-        '@odata.type': '#microsoft.graph.fileAttachment',
-        name: att.name,
-        contentType: att.contentType,
-        contentBytes: att.base64,
-      })),
-    },
-    saveToSentItems: true,
-  };
-
-  const res = await fetch(
-    `https://graph.microsoft.com/v1.0/users/${SENDER_EMAIL}/sendMail`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
-    }
-  );
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Graph sendMail failed (${res.status}): ${text}`);
+  if (error) {
+    throw new Error(`Resend error: ${error.message}`);
   }
 }
 
 /**
- * Check if Azure credentials are configured
+ * Check if Resend is configured
  */
 export function isEmailConfigured(): boolean {
-  return !!(TENANT_ID && CLIENT_ID && CLIENT_SECRET);
+  return !!process.env.RESEND_API_KEY;
 }
