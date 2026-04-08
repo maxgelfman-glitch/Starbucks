@@ -105,7 +105,8 @@ function drawCursiveSignature(doc, name, x, y, maxWidth) {
 
 function generateWO() {
   try {
-  const { jsPDF } = window.jspdf;
+  const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if (!jsPDF) { alert('PDF library not loaded. Check your internet connection and refresh.'); return; }
   const doc = new jsPDF('p', 'pt', 'letter');
   const W = doc.internal.pageSize.getWidth();
   const M = 36;
