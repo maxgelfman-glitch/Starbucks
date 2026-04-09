@@ -17,6 +17,8 @@ interface CCPhoto {
   uris?: Array<{ type: string; uri: string }>;
   uri?: string;
   photo_url?: string;
+  captured_at?: number;
+  created_at?: number;
 }
 
 export default function JobDetailPage() {
@@ -138,10 +140,13 @@ export default function JobDetailPage() {
       if (data.matched && data.project) {
         // Exact match found — photos already loaded
         setCcMatchedProject(data.project.name);
-        setCcPhotos(data.photos || []);
+        const photos = data.photos || [];
+        setCcPhotos(photos);
         // Auto-select all photos (typically exactly 5)
-        const allUrls = (data.photos || []).map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
+        const allUrls = photos.map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
         setSelectedPhotos(new Set(allUrls));
+        // Auto-fill start/stop times from photo timestamps
+        autoFillTimesFromPhotos(photos);
       } else {
         // No exact match — show search results for manual selection
         setCcProjects(data.searchResults || []);
@@ -164,12 +169,15 @@ export default function JobDetailPage() {
       const res = await fetch(`/api/companycam?projectId=${projectId}`);
       const data = await res.json();
       if (data.success && data.photos) {
-        setCcPhotos(data.photos);
+        const photos = data.photos;
+        setCcPhotos(photos);
         setCcProjects([]);
         setCcMatchedProject(projectName || '');
         // Auto-select all photos
-        const allUrls = data.photos.map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
+        const allUrls = photos.map((p: CCPhoto) => getPhotoUrl(p)).filter(Boolean);
         setSelectedPhotos(new Set(allUrls));
+        // Auto-fill start/stop times from photo timestamps
+        autoFillTimesFromPhotos(photos);
       }
     } catch {
       setCcError('Failed to load photos.');
@@ -190,6 +198,31 @@ export default function JobDetailPage() {
   function getThumbUrl(photo: CCPhoto): string {
     if (photo.urls?.thumbnail) return photo.urls.thumbnail;
     return getPhotoUrl(photo);
+  }
+
+  function autoFillTimesFromPhotos(photos: CCPhoto[]) {
+    if (!job || photos.length === 0) return;
+    // Get timestamps from photos (captured_at or created_at, in seconds)
+    const timestamps = photos
+      .map((p) => p.captured_at || p.created_at || 0)
+      .filter((t) => t > 0);
+    if (timestamps.length === 0) return;
+
+    const earliest = Math.min(...timestamps);
+    const latest = Math.max(...timestamps);
+
+    // Convert Unix timestamps to HH:MM format
+    const toTimeStr = (ts: number) => {
+      const d = new Date(ts * 1000);
+      return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+    };
+
+    const startStr = toTimeStr(earliest);
+    const stopStr = toTimeStr(latest);
+
+    // Only auto-fill if not already set
+    if (!job.startTime) updateField('startTime', startStr);
+    if (!job.stopTime) updateField('stopTime', stopStr);
   }
 
   function togglePhoto(url: string) {
