@@ -106,13 +106,14 @@ export default function UploadPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            clientFirstName: `Starbucks #${row.storeNumber}`,
-            jobAddress: row.address,
-            jobCity: row.city,
-            jobState: row.state,
-            jobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,
-            jobDateTime: row.date,
-            jobType: 'Commercial',
+            FirstName: `Starbucks #${row.storeNumber}`,
+            Address: row.address,
+            City: row.city,
+            State: row.state,
+            Country: 'US',
+            JobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,
+            JobDateTime: row.date + ' 22:00',
+            JobType: 'Commercial',
           }),
         });
         const data = await res.json();
