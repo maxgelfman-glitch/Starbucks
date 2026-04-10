@@ -74,3 +74,11 @@ export async function assignTech(jobId: string, teamMemberId: string) {
 export async function getTeamMembers() {
   return workizGet('team/all/');
 }
+
+export async function createInvoice(data: {
+  JobUUID: string;
+  Items?: Array<{ description: string; quantity: number; price: number }>;
+  [key: string]: unknown;
+}) {
+  return workizPost('invoice/create/', data);
+}

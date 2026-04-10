@@ -61,6 +61,8 @@ export default function UploadPage() {
     setMessage(`Parsed ${parsed.length} jobs from ${file.name}`);
   }, []);
 
+  const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+
   async function saveLocally() {
     const jobs: Job[] = rows.map((row, i) => ({
       id: uuidv4(),
@@ -68,7 +70,7 @@ export default function UploadPage() {
       address: row.address,
       city: row.city,
       state: row.state,
-      price: prices[i] ?? DEFAULT_PRICE,
+      price: prices[i] ?? row.price ?? DEFAULT_PRICE,
       serviceDate: row.date,
       nightNumber: row.night,
       assignedTech: techs[i] || defaultTech || undefined,
@@ -84,6 +86,7 @@ export default function UploadPage() {
     });
 
     if (res.ok) {
+      setSavedJobIds(jobs.map((j) => j.id));
       setMessage(`Saved ${jobs.length} jobs! Redirecting to schedule...`);
       setTimeout(() => { window.location.href = '/schedule'; }, 1500);
     } else {
@@ -119,6 +122,15 @@ export default function UploadPage() {
         const data = await res.json();
         if (res.ok && !data.error) {
           succeeded++;
+          // Save Workiz UUID back to local job if we have one
+          const workizUuid = data?.data?.UUID || data?.UUID || data?.uuid;
+          if (workizUuid && savedJobIds[i]) {
+            fetch(`/api/jobs/${savedJobIds[i]}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ workizJobId: workizUuid }),
+            }).catch(() => {});
+          }
         } else {
           failed++;
           errors.push(`#${row.storeNumber}: ${data.error || `HTTP ${res.status}`}`);

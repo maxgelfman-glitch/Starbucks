@@ -639,12 +639,53 @@ export default function JobDetailPage() {
         )}
       </div>
 
-      {/* Workiz sync info */}
-      {job.workizJobId && (
-        <div className="bg-[#111827] rounded-lg border border-[#1f2937] p-4 text-sm text-gray-400">
-          Workiz Job ID: <span className="text-white font-mono">{job.workizJobId}</span>
-        </div>
-      )}
+      {/* Workiz */}
+      <div className="bg-[#111827] rounded-lg border border-[#1f2937] p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Workiz</h2>
+        {job.workizJobId && (
+          <p className="text-gray-400 text-sm mb-4">
+            Job ID: <span className="text-white font-mono">{job.workizJobId}</span>
+          </p>
+        )}
+        <button
+          onClick={async () => {
+            if (!job.workizJobId) {
+              setEmailStatus('No Workiz Job ID — push the job to Workiz from the Upload page first.');
+              return;
+            }
+            setEmailStatus('');
+            try {
+              const res = await fetch('/api/workiz/invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  JobUUID: job.workizJobId,
+                  Items: [{
+                    description: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
+                    quantity: 1,
+                    price: job.price || 350,
+                  }],
+                }),
+              });
+              const data = await res.json();
+              if (data.error) {
+                setEmailStatus(`Workiz invoice failed: ${data.error}`);
+              } else {
+                setEmailStatus('Invoice created in Workiz!');
+              }
+            } catch {
+              setEmailStatus('Failed to create Workiz invoice.');
+            }
+          }}
+          disabled={!job.workizJobId}
+          className="px-4 py-2 bg-[#00A4C7] text-white rounded text-sm font-medium hover:bg-[#0090b0] transition-colors disabled:opacity-50"
+        >
+          Create Invoice in Workiz
+        </button>
+        {!job.workizJobId && (
+          <p className="text-yellow-500 text-xs mt-2">Push job to Workiz from Upload page first to get a Job ID</p>
+        )}
+      </div>
     </div>
   );
 }
