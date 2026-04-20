@@ -19,10 +19,21 @@ async function workizGet(endpoint: string) {
 
 async function workizPost(endpoint: string, data: Record<string, unknown>) {
   const url = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
-  const body = { auth_secret: API_SECRET, ...data };
+  // Try multiple secret field name variants — Workiz docs are inconsistent
+  const body = {
+    auth_secret: API_SECRET,
+    api_secret: API_SECRET,
+    secret: API_SECRET,
+    ...data,
+  };
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-API-Secret': API_SECRET,
+      'Authorization': `Bearer ${API_SECRET}`,
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
