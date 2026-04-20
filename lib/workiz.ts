@@ -18,35 +18,33 @@ async function workizGet(endpoint: string) {
 }
 
 async function workizPost(endpoint: string, data: Record<string, unknown>) {
-  // Try 1: token in URL, full secret in body
-  const url1 = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
-  const body1 = { auth_secret: API_SECRET, ...data };
+  const body = { auth_secret: API_SECRET, ...data };
 
+  // Try 1: token in URL, secret in body as auth_secret (per Workiz support)
+  const url1 = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
   let res = await fetch(url1, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(body1),
+    body: JSON.stringify(body),
   });
 
   if (res.status === 401) {
-    // Try 2: token in URL, secret WITHOUT "sec_" prefix
-    const strippedSecret = API_SECRET.replace(/^sec_/, '');
-    const body2 = { auth_secret: strippedSecret, ...data };
-    res = await fetch(url1, {
+    // Try 2: token in URL, secret as query param
+    const url2 = `${POST_BASE}/${API_TOKEN}/${endpoint}?auth_secret=${encodeURIComponent(API_SECRET)}`;
+    res = await fetch(url2, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(body2),
+      body: JSON.stringify(data),
     });
   }
 
   if (res.status === 401) {
-    // Try 3: secret in URL, token as auth_secret in body
-    const url3 = `${POST_BASE}/${API_SECRET}/${endpoint}`;
-    const body3 = { auth_secret: API_TOKEN, ...data };
+    // Try 3: secret in URL as query param with different name
+    const url3 = `${POST_BASE}/${API_TOKEN}/${endpoint}?api_secret=${encodeURIComponent(API_SECRET)}`;
     res = await fetch(url3, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(body3),
+      body: JSON.stringify(data),
     });
   }
 
