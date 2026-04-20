@@ -18,17 +18,37 @@ async function workizGet(endpoint: string) {
 }
 
 async function workizPost(endpoint: string, data: Record<string, unknown>) {
-  const url = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
-  const body = { auth_secret: API_SECRET, ...data };
+  // Try 1: token in URL, full secret in body
+  const url1 = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
+  const body1 = { auth_secret: API_SECRET, ...data };
 
-  const res = await fetch(url, {
+  let res = await fetch(url1, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(body1),
   });
+
+  if (res.status === 401) {
+    // Try 2: token in URL, secret WITHOUT "sec_" prefix
+    const strippedSecret = API_SECRET.replace(/^sec_/, '');
+    const body2 = { auth_secret: strippedSecret, ...data };
+    res = await fetch(url1, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body2),
+    });
+  }
+
+  if (res.status === 401) {
+    // Try 3: secret in URL, token as auth_secret in body
+    const url3 = `${POST_BASE}/${API_SECRET}/${endpoint}`;
+    const body3 = { auth_secret: API_TOKEN, ...data };
+    res = await fetch(url3, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body3),
+    });
+  }
 
   if (!res.ok) {
     const text = await res.text();
