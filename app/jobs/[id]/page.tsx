@@ -657,15 +657,18 @@ export default function JobDetailPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      FirstName: `Starbucks #${job.storeNumber}`,
+                      FirstName: 'Starbucks',
+                      LastName: `#${job.storeNumber}`,
                       Address: job.address,
                       City: job.city,
                       State: job.state,
                       Country: 'US',
                       PostalCode: job.zip || '',
-                      Phone: job.storePhone || '',
+                      Phone: (job.storePhone || '').replace(/\D/g, '') || '0000000000',
+                      Email: 'starbucks@gosuperclean.com',
                       JobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
                       JobDateTime: job.serviceDate + ' 22:00',
+                      JobType: 'Commercial',
                     }),
                   });
                   const data = await res.json();
