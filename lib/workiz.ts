@@ -21,25 +21,14 @@ async function workizPost(endpoint: string, data: Record<string, unknown>) {
   const url = `${POST_BASE}/${API_TOKEN}/${endpoint}`;
   const body = { auth_secret: API_SECRET, ...data };
 
-  // Try JSON first
-  let res = await fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
     body: JSON.stringify(body),
   });
-
-  // If 401 with JSON, try form-encoded (Workiz may require it)
-  if (res.status === 401) {
-    const formBody = new URLSearchParams();
-    for (const [k, v] of Object.entries(body)) {
-      if (v !== undefined && v !== null) formBody.append(k, String(v));
-    }
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formBody.toString(),
-    });
-  }
 
   if (!res.ok) {
     const text = await res.text();
