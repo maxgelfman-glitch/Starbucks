@@ -1,10 +1,9 @@
 const API_TOKEN = process.env.WORKIZ_API_TOKEN || '';
 const API_SECRET = process.env.WORKIZ_API_SECRET || '';
 
-// GET requests use api.workiz.com
+// All requests use api.workiz.com
 const GET_BASE = 'https://api.workiz.com/api/v1';
-// POST requests use app.workiz.com
-const POST_BASE = 'https://app.workiz.com/api/v1';
+const POST_BASE = 'https://api.workiz.com/api/v1';
 
 async function workizGet(endpoint: string) {
   const url = `${GET_BASE}/${API_TOKEN}/${endpoint}`;
