@@ -95,8 +95,8 @@ export default function SchedulePage() {
                       JobDateTime: job.serviceDate + ' 22:00',
                       JobType: 'starbucks',
                       LineItems: [{
-                        Name: 'Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks',
-                        Description: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
+                        Name: 'Starbucks',
+                        Description: 'Pressure wash Sidewalks, patio includes moving tables, chairs. Ensure gum and other foreign matter is removed. Drive thru (up to 10ft past and 30ft before pick up window). Sweep and remove all dirt and debris. Apply degreaser to areas stained by coffee, oil, food etc. Deck brush stains as needed. Pressure wash using concrete surfacer, rinse with pressure wand. Service scheduled after closing, completed before 5AM.',
                         Quantity: 1,
                         Price: job.price || 350,
                         Type: 'service',
