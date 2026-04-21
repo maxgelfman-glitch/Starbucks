@@ -118,7 +118,7 @@ export default function UploadPage() {
             Country: 'US',
             Phone: '0000000000',
             Email: 'starbucks@gosuperclean.com',
-            JobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,
+            JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,
             JobDateTime: row.date + ' 22:00',
             JobType: 'starbucks',
           }),

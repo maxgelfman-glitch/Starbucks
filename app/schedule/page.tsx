@@ -89,7 +89,7 @@ export default function SchedulePage() {
                       Company: `Starbucks #${job.storeNumber}`,
                       Address: job.address, City: job.city, State: job.state, Country: 'US',
                       Phone: '0000000000', Email: 'starbucks@gosuperclean.com',
-                      JobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
+                      JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
                       JobDateTime: job.serviceDate + ' 22:00',
                       JobType: 'starbucks',
                     }),
