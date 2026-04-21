@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_PRICE } from '@/lib/constants';
 import { useTechnicians } from '@/lib/use-technicians';
+import { getZipForStore } from '@/lib/zip-lookup';
 import { Job, ParsedScheduleRow } from '@/lib/types';
 
 export default function UploadPage() {
@@ -116,6 +117,7 @@ export default function UploadPage() {
             City: row.city,
             State: row.state,
             Country: 'US',
+            PostalCode: getZipForStore(row.storeNumber) || '00000',
             Phone: '0000000000',
             Email: 'starbucks@gosuperclean.com',
             JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Job } from '@/lib/types';
 import { DEFAULT_PRICE } from '@/lib/constants';
 import { useTechnicians } from '@/lib/use-technicians';
+import { getZipForStore } from '@/lib/zip-lookup';
 
 interface CCProject {
   id: string;
@@ -664,7 +665,7 @@ export default function JobDetailPage() {
                       City: job.city,
                       State: job.state,
                       Country: 'US',
-                      PostalCode: job.zip || '00000',
+                      PostalCode: job.zip || getZipForStore(job.storeNumber) || '00000',
                       Phone: (job.storePhone || '').replace(/\D/g, '') || '0000000000',
                       Email: 'starbucks@gosuperclean.com',
                       JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,

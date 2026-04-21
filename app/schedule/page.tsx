@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Job } from '@/lib/types';
 import { useTechnicians } from '@/lib/use-technicians';
+import { getZipForStore } from '@/lib/zip-lookup';
 
 type ViewMode = 'week' | 'month';
 
@@ -88,6 +89,7 @@ export default function SchedulePage() {
                       LastName: 'Clean',
                       Company: `Starbucks #${job.storeNumber}`,
                       Address: job.address, City: job.city, State: job.state, Country: 'US',
+                      PostalCode: job.zip || getZipForStore(job.storeNumber) || '00000',
                       Phone: '0000000000', Email: 'starbucks@gosuperclean.com',
                       JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
                       JobDateTime: job.serviceDate + ' 22:00',
