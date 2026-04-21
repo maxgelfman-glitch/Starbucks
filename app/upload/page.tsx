@@ -109,8 +109,9 @@ export default function UploadPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            FirstName: 'Starbucks',
-            LastName: `#${row.storeNumber}`,
+            FirstName: 'Go Super',
+            LastName: 'Clean',
+            Company: `Starbucks #${row.storeNumber}`,
             Address: row.address,
             City: row.city,
             State: row.state,
@@ -119,7 +120,7 @@ export default function UploadPage() {
             Email: 'starbucks@gosuperclean.com',
             JobDescription: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${row.storeNumber}`,
             JobDateTime: row.date + ' 22:00',
-            JobType: 'Commercial',
+            JobType: 'starbucks',
           }),
         });
         const data = await res.json();
