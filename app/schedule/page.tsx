@@ -94,6 +94,13 @@ export default function SchedulePage() {
                       JobNotes: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
                       JobDateTime: job.serviceDate + ' 22:00',
                       JobType: 'starbucks',
+                      LineItems: [{
+                        Name: 'Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks',
+                        Description: `Pressure Wash Patio/Sidewalk/Drive Thru - Starbucks #${job.storeNumber}`,
+                        Quantity: 1,
+                        Price: job.price || 350,
+                        Type: 'service',
+                      }],
                     }),
                   });
                   const data = await res.json();
