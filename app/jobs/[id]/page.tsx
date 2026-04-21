@@ -677,11 +677,32 @@ export default function JobDetailPage() {
                   if (data.error) {
                     setEmailStatus(`Workiz push failed: ${data.error}`);
                   } else {
-                    const workizUuid = data?.data?.UUID || data?.UUID || data?.uuid;
+                    // Extract UUID from response (try all possible locations)
+                    const workizUuid = data?.data?.UUID || data?.UUID || data?.uuid
+                      || data?.data?.[0]?.UUID || data?.SerialId;
                     if (workizUuid) {
-                      await updateField('workizJobId', workizUuid);
+                      await updateField('workizJobId', String(workizUuid));
+                      // Now add line items via job/update
+                      try {
+                        await fetch('/api/workiz/invoice', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            jobId: String(workizUuid),
+                            LineItems: [{
+                              Name: 'Starbucks',
+                              Description: 'Pressure wash Sidewalks, patio includes moving tables, chairs. Ensure gum and other foreign matter is removed. Drive thru (up to 10ft past and 30ft before pick up window). Sweep and remove all dirt and debris. Apply degreaser to areas stained by coffee, oil, food etc. Deck brush stains as needed. Pressure wash using concrete surfacer, rinse with pressure wand. Service scheduled after closing, completed before 5AM.',
+                              Quantity: 1,
+                              Price: job.price || 350,
+                              Type: 'service',
+                            }],
+                          }),
+                        });
+                      } catch { /* line items update is best-effort */ }
                     }
-                    setEmailStatus('Job pushed to Workiz!');
+                    setEmailStatus(workizUuid
+                      ? `Job pushed to Workiz! (ID: ${workizUuid})`
+                      : `Job pushed but no UUID returned. Response: ${JSON.stringify(data).slice(0, 150)}`);
                     refreshJob();
                   }
                 } catch {
