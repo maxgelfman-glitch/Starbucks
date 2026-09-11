@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, isEmailConfigured } from '@/lib/email';
 import { downloadPhotoAsBase64 } from '@/lib/companycam';
+
+export const dynamic = 'force-dynamic';
 import { generateInvoicePDF } from '@/lib/pdf/invoice';
 import { generateWorkOrderPDF } from '@/lib/pdf/work-order';
 import { getJobById, updateJob } from '@/lib/db';

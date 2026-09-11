@@ -1,10 +1,19 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.EMAIL_FROM || 'max@rollingsudsnyct.net';
 const EMAIL_SENDER_NAME = process.env.EMAIL_SENDER_NAME || 'Max Gelfman';
 const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || 'max.gelfman@rollingsuds.com';
 const EMAIL_CC = process.env.EMAIL_CC || 'max.gelfman@rollingsuds.com';
+
+let resendClient: Resend | null = null;
+function getResend(): Resend {
+  if (!resendClient) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error('RESEND_API_KEY not configured');
+    resendClient = new Resend(key);
+  }
+  return resendClient;
+}
 
 interface Attachment {
   name: string;
@@ -23,7 +32,7 @@ interface EmailOptions {
  * Send an email via Resend
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: `${EMAIL_SENDER_NAME} <${EMAIL_FROM}>`,
     replyTo: EMAIL_REPLY_TO || undefined,
     to: [options.to],
