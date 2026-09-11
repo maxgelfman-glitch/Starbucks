@@ -45,8 +45,9 @@ export async function getAllJobs(): Promise<Job[]> {
       const data = await client.get(JOBS_KEY);
       return data ? JSON.parse(data) : [];
     } catch (err) {
-      console.error('Redis getAllJobs error:', err);
-      return [];
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('Redis getAllJobs error:', msg);
+      throw new Error(`Redis: ${msg}`);
     }
   }
   ensureDir();
