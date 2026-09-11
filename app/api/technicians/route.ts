@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTechnicians, setTechnicians } from '@/lib/db';
 
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   return NextResponse.json(await getTechnicians());
 }

@@ -4,6 +4,9 @@ import { SEED_JOBS, DEFAULT_PRICE } from '@/lib/constants';
 import { Job } from '@/lib/types';
 import { setAllJobs } from '@/lib/db';
 
+
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   const now = new Date().toISOString();
   const jobs: Job[] = SEED_JOBS.map((s) => ({

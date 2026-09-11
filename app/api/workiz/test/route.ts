@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { testConnection } from '@/lib/workiz';
 
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const result = await testConnection();

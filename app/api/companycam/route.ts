@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchProjects, findStarbucksProject, getProjectPhotos } from '@/lib/companycam';
 
+
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/companycam?storeNumber=00806&woNumber=1963606 — find exact project + photos
  * GET /api/companycam?query=00806 — generic search

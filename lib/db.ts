@@ -10,7 +10,13 @@ let redisClient: RedisClientType | null = null;
 
 async function getRedis(): Promise<RedisClientType> {
   if (!redisClient) {
-    redisClient = createClient({ url: REDIS_URL }) as RedisClientType;
+    redisClient = createClient({
+      url: REDIS_URL,
+      socket: {
+        connectTimeout: 5000,
+        reconnectStrategy: (retries) => retries > 3 ? new Error('Max retries') : Math.min(retries * 200, 1000),
+      },
+    }) as RedisClientType;
     redisClient.on('error', (err) => console.error('Redis error:', err));
     await redisClient.connect();
   }

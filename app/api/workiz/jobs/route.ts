@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createJob, getAllJobs } from '@/lib/workiz';
 
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const result = await getAllJobs();
